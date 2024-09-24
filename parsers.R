@@ -1,6 +1,11 @@
+require(vroom)
+require(purrr)
+require(dplyr)
+require(tibble)
+
 ## Define `hmmscan tblout` parsing function
 read_hmmer_tblout <- function(path) {
-  readr::read_lines(path) |>
+  vroom::vroom_lines(path) |>
     purrr::discard(~startsWith(.x, "#")) |>
     purrr::map_vec(~stringr::str_split(.x, "\\s+", n=19, simplify=TRUE)) |>
     tibble::as_tibble() |>
@@ -18,7 +23,7 @@ read_hmmer_tblout <- function(path) {
 
 ## Define KOFAMSCAN output parsing function
 read_kofamscan <- function(path) {
-  readr::read_lines(path) |>
+  vroom::vroom_lines(path) |>
     purrr::discard(~startsWith(.x, "#")) |>
     purrr::map_vec(~stringr::str_split(.x, "\\s+", n=7, simplify=TRUE)) |>
     tibble::as_tibble() |>
@@ -26,3 +31,16 @@ read_kofamscan <- function(path) {
                           'score', 'evalue', 'KO_definition')) |>
     dplyr::mutate(dplyr::across(tidyselect::all_of(c(4, 5, 6)), as.double))
 }
+
+## Define a function for reading PAF files from Minimap2
+### Note, this does not parse any tags; this may become a feature in the future.
+read_paf <- function(path) {
+  vroom::vroom(
+      path, col_select = 1:12, id = 'id', delim='\t',
+      col_types=vroom::cols_only("c", "i", "i", "i", "c", "c", "i", "i", "i", 
+                                 "i", "i", "i"),
+      col_names=c("query", "qlen", "qstart", "qend", "strand", "target", "tlen", 
+                  "tstart", "tend", "nmatch", "alen", "mapq")
+    )
+}
+
