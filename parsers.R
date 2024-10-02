@@ -44,3 +44,18 @@ read_paf <- function(path) {
     )
 }
 
+## Define a function for reading BED files from Bedtools coverage
+read_covbed <- function(file) {
+  vroom::vroom(
+    file, delim='\t', col_types='cccii-c-ciiid',
+    col_names=c(
+      "Contig", "Source", "Type", "Start", "End", "Score", "Strand", "Phase", 
+      "Attributes", "N_reads_overlapped", "N_bases_covered", "Length", 
+      "Frac_bases_covered"
+    )
+  ) |> 
+  tidyr::separate_longer_delim(Attributes, ";") |> 
+  tidyr::separate_wider_delim(Attributes, "=", names=c("name", "value")) |> 
+  tidyr::pivot_wider()
+}
+
